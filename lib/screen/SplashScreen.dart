@@ -60,30 +60,6 @@ class _SplashScreenState extends State<SplashScreen> {
                 ],
               ),
             ),
-            Container(
-              alignment: Alignment.center,
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.center,
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: <Widget>[
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: <Widget>[
-                      Text('With ', style: TextStyle(color: Colors.white,fontSize: 13),),
-                      Icon(Icons.favorite, color: Colors.blue,)
-                    ],
-                  ),
-                  SizedBox(height: 4,),
-                  GradientText('DEVELOPERS',
-                      gradient: LinearGradient(
-                          colors: [Colors.lightBlueAccent,  Colors.blue, Colors.indigo]),
-                      style: TextStyle(fontSize: 16,),
-                      textAlign: TextAlign.center,
-                  ),
-
-                ],
-              ),
-            )
           ],
         ),
       ),

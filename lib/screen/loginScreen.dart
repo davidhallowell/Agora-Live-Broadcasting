@@ -1,4 +1,3 @@
-import 'package:agorartm/firebaseDB/auth.dart';
 import 'package:agorartm/screen/regScreen.dart';
 import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
@@ -210,7 +209,7 @@ class _LoginScreenState extends State<LoginScreen> {
                 crossAxisAlignment: CrossAxisAlignment.center,
                 children: <Widget>[
                   Text(
-                    'ShareLife',
+                    'DAPP',
                     style: TextStyle(
                       fontFamily: 'Billabong',
                       color: Colors.white,

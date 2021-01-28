@@ -1,6 +1,5 @@
 import 'dart:async';
 import 'package:agora_rtm/agora_rtm.dart';
-import 'package:agorartm/firebaseDB/firestoreDB.dart';
 import 'package:agorartm/models/message.dart';
 import 'package:agorartm/screen/Loading.dart';
 import 'package:agora_rtc_engine/agora_rtc_engine.dart';
@@ -15,7 +14,7 @@ import 'package:agorartm/screen/HearAnim.dart';
 class JoinPage extends StatefulWidget {
   /// non-modifiable channel name of the page
   final String channelName;
-  final int channelId;
+  final String channelId;
   final String username;
   final String hostImage;
   final String userImage;
@@ -83,21 +82,19 @@ class _JoinPageState extends State<JoinPage> {
 
     await _initAgoraRtcEngine();
     _addAgoraEventHandlers();
+    AgoraRtcEngine.setChannelProfile(ChannelProfile.LiveBroadcasting);
+    AgoraRtcEngine.setClientRole(ClientRole.Audience);
     await AgoraRtcEngine.enableWebSdkInteroperability(true);
-    await AgoraRtcEngine.setParameters(
-        '''{\"che.video.lowBitRateStreamParameter\":{\"width\":320,\"height\":180,\"frameRate\":15,\"bitRate\":140}}''');
-    await AgoraRtcEngine.joinChannel(null, widget.channelName, null, 0);
+    // await AgoraRtcEngine.setParameters(
+    //     '''{\"che.video.lowBitRateStreamParameter\":{\"width\":320,\"height\":180,\"frameRate\":15,\"bitRate\":140}}''');
+    await AgoraRtcEngine.joinChannel(null, widget.channelId, null, 0);
   }
 
   /// Create agora sdk instance and initialize
   Future<void> _initAgoraRtcEngine() async {
     await AgoraRtcEngine.create(APP_ID);
+    AgoraRtcEngine.setLogFilter(5);
     await AgoraRtcEngine.enableVideo();
-    //await AgoraRtcEngine.muteLocalAudioStream(true);
-    await AgoraRtcEngine.enableLocalAudio(false);
-    await AgoraRtcEngine.enableLocalVideo(!muted);
-
-
   }
 
   /// Add agora event handlers
@@ -108,10 +105,12 @@ class _JoinPageState extends State<JoinPage> {
       int uid,
       int elapsed,
     ) {
+      debugPrint("onJoinChannelSuccess $channel");
       Wakelock.enable();
     };
 
     AgoraRtcEngine.onUserJoined = (int uid, int elapsed) {
+      debugPrint('onUserJoined $uid');
       setState(() {
         _users.add(uid);
       });
@@ -135,18 +134,16 @@ class _JoinPageState extends State<JoinPage> {
 
   /// Helper function to get list of native views
   List<Widget> _getRenderViews() {
+    debugPrint('_getRenderViews');
     final List<AgoraRenderWidget>  list = [];
     //user.add(widget.channelId);
     _users.forEach((int uid) {
-      if(uid == widget.channelId) {
+      debugPrint('foreach $uid');
+     //if(uid == widget.channelId) {
         list.add(AgoraRenderWidget(uid));
 
-      }
+      //}
     });
-    if(accepted == true){
-      list.add(AgoraRenderWidget(0, local: true, preview: true));
-
-    }
     if(list.isEmpty) {
 
       setState(() {
@@ -415,20 +412,20 @@ class _JoinPageState extends State<JoinPage> {
             mainAxisAlignment: MainAxisAlignment.end,
             crossAxisAlignment: CrossAxisAlignment.end,
             children: <Widget>[
-              Container(
-                decoration: BoxDecoration(
-                    gradient: LinearGradient(
-                      colors: <Color>[
-                        Colors.indigo, Colors.blue
-                      ],
-                    ),
-                    borderRadius: BorderRadius.all(Radius.circular(4.0))
-                ),
-                child: Padding(
-                  padding: const EdgeInsets.symmetric(vertical: 5.0,horizontal: 8.0),
-                  child: Text('LIVE',style: TextStyle(color: Colors.white,fontSize: 15,fontWeight: FontWeight.bold),),
-                ),
-              ),
+              // Container(
+              //   decoration: BoxDecoration(
+              //       gradient: LinearGradient(
+              //         colors: <Color>[
+              //           Colors.indigo, Colors.blue
+              //         ],
+              //       ),
+              //       borderRadius: BorderRadius.all(Radius.circular(4.0))
+              //   ),
+              //   child: Padding(
+              //     padding: const EdgeInsets.symmetric(vertical: 5.0,horizontal: 8.0),
+              //     child: Text('LIVE',style: TextStyle(color: Colors.white,fontSize: 15,fontWeight: FontWeight.bold),),
+              //   ),
+              // ),
               Padding(
                 padding: const EdgeInsets.only(left:5),
                 child: Container(
@@ -468,15 +465,15 @@ class _JoinPageState extends State<JoinPage> {
           mainAxisAlignment: MainAxisAlignment.end,
           crossAxisAlignment: CrossAxisAlignment.end,
           children: <Widget>[
-            CachedNetworkImage(
-              imageUrl: widget.hostImage,
-              imageBuilder: (context, imageProvider) => Container(
-                width: 30.0,
-                height: 30.0,
-                decoration: BoxDecoration(
-                  shape: BoxShape.circle,
-                  image: DecorationImage(
-                      image: imageProvider, fit: BoxFit.cover),
+            GestureDetector(
+              onTap: () {
+                Navigator.pop(context);
+              },
+              child: Container(
+                child: Image.asset(
+                  'assets/images/icon.png',
+                  width: 32.0,
+                  height: 32.0,
                 ),
               ),
             ),
@@ -493,159 +490,9 @@ class _JoinPageState extends State<JoinPage> {
                       ),
                     ],
                     color: Colors.white,
-                    fontSize: 15,
+                    fontSize: 18,
                     fontWeight: FontWeight.bold,
-                    fontStyle: FontStyle.italic
                 ),
-              ),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-
-  Widget requestedWidget(){
-    return Container(
-      alignment: Alignment.bottomCenter,
-      child: Container(
-        width: MediaQuery.of(context).size.height,
-        color: Colors.black,
-        child: Wrap(
-          direction: Axis.horizontal,
-          alignment: WrapAlignment.center,
-          spacing: 0,
-          children: <Widget>[
-            Container(
-              margin: EdgeInsets.only(top: 20, ),
-              width: 130,
-              alignment: Alignment.center,
-              child: Stack(
-                children: <Widget>[
-                  Container(
-                    width: 130,
-                    alignment: Alignment.centerLeft,
-                    child: Stack(
-                      alignment: Alignment(0, 0),
-                      children: <Widget>[
-                        Container(
-                          width: 75,
-                          height: 75,
-                          decoration: BoxDecoration(
-                            color: Colors.white,
-                            shape: BoxShape.circle,
-                          ),
-                        ),
-                        CachedNetworkImage(
-                          imageUrl: widget.hostImage,
-                          imageBuilder: (context, imageProvider) => Container(
-                            width: 70.0,
-                            height: 70.0,
-                            decoration: BoxDecoration(
-                              shape: BoxShape.circle,
-                              image: DecorationImage(
-                                  image: imageProvider, fit: BoxFit.cover),
-                            ),
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-                  Container(
-                    width: 130,
-                    alignment: Alignment.centerRight,
-                    child: Stack(
-                      alignment: Alignment(0, 0),
-                      children: <Widget>[
-                        Container(
-                          width: 75,
-                          height: 75,
-                          decoration: BoxDecoration(
-                            color: Colors.white,
-                            shape: BoxShape.circle,
-                          ),
-                        ),
-                        CachedNetworkImage(
-                          imageUrl: widget.userImage,
-                          imageBuilder: (context, imageProvider) => Container(
-                            width: 70.0,
-                            height: 70.0,
-                            decoration: BoxDecoration(
-                              shape: BoxShape.circle,
-                              image: DecorationImage(
-                                  image: imageProvider, fit: BoxFit.cover),
-                            ),
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-                ],
-              ),
-            ),
-            Padding(
-              padding: const EdgeInsets.all(20.0),
-              child: Text(
-                '${widget.channelName} Wants You To Be In This Live Video.',
-                textAlign: TextAlign.center,
-                style: TextStyle(
-                  color: Colors.white,
-                  fontSize: 18,
-                  fontWeight: FontWeight.bold,
-                ),
-              ),
-            ),
-            Padding(
-              padding: EdgeInsets.only(left: 20,top: 0,bottom:20,right: 20,),
-              child: Text(
-                'Anyone can watch, and some of your followers may get notified.',
-                textAlign: TextAlign.center,
-                style: TextStyle(
-                  fontSize: 14,
-                  color: Colors.grey[300],
-                ),
-              ),
-            ),
-            Container(
-              padding: EdgeInsets.symmetric(horizontal: 20),
-              width: double.maxFinite,
-              child: RaisedButton(
-                child: Padding(
-                  padding: const EdgeInsets.symmetric(vertical: 15),
-                  child: Text('Go Live with ${widget.channelName}',style: TextStyle(color: Colors.white),),
-                ),
-                elevation: 2.0,
-                color: Colors.blue[400],
-                onPressed: ()async{
-
-                  await AgoraRtcEngine.enableLocalVideo(true);
-                  await AgoraRtcEngine.enableLocalAudio(true);
-                  await _channel.sendMessage(AgoraRtmMessage.fromText('k1r2i3s4t5i6e7 confirming'));
-                  setState((){
-                    accepted = true;
-                    requested=false;
-
-                  });
-                },
-              ),
-            ),
-            Container(
-              padding: EdgeInsets.symmetric(horizontal: 20),
-              width: double.maxFinite,
-              child: RaisedButton(
-
-                child: Padding(
-                  padding: const EdgeInsets.symmetric(vertical: 15),
-                  child: Text('Decline',style: TextStyle(color: Colors.pink[300]),),
-                ),
-                elevation: 2.0,
-                color: Colors.transparent,
-                onPressed: ()async{
-                  await _channel.sendMessage(AgoraRtmMessage.fromText('R1e2j3e4c5t6i7o8n9e0d Rejected'));
-                  setState(() {
-                    requested=false;
-                  });
-                },
               ),
             ),
           ],
@@ -704,9 +551,7 @@ class _JoinPageState extends State<JoinPage> {
                     _username(),
                     _liveText(),
                     if(completed==false)_messageList(),
-                    if(heart == true && completed==false) heartPop(),
-                    if(requested == true) requestedWidget(),
-                    if(accepted == true) stopSharing(),
+                    // if(heart == true && completed==false) heartPop(),
 
                     //_ending()
                   ],
@@ -853,7 +698,7 @@ class _JoinPageState extends State<JoinPage> {
     _client =
     await AgoraRtmClient.createInstance('b42ce8d86225475c9558e478f1ed4e8e');
     _client.onMessageReceived = (AgoraRtmMessage message, String peerId)  async{
-      var img = await FireStoreClass.getImage(username: peerId);
+      var img = Image.asset('assets/images/icon.png', width: 32.0, height: 32.0);
       userMap.putIfAbsent(peerId, () => img);
       _log(user: peerId, info: message.text, type: 'message');
     };
@@ -883,7 +728,7 @@ class _JoinPageState extends State<JoinPage> {
   Future<AgoraRtmChannel> _createChannel(String name) async {
     AgoraRtmChannel channel = await _client.createChannel(name);
     channel.onMemberJoined = (AgoraRtmMember member) async{
-      var img = await FireStoreClass.getImage(username: member.userId);
+      var img = Image.asset('assets/images/icon.png', width: 32.0, height: 32.0);
       userMap.putIfAbsent(member.userId, () => img);
 
       _channel.getMembers().then((value) {
@@ -907,7 +752,7 @@ class _JoinPageState extends State<JoinPage> {
     };
     channel.onMessageReceived =
         (AgoraRtmMessage message, AgoraRtmMember member) async {
-          var img = await FireStoreClass.getImage(username: member.userId);
+          var img = Image.asset('assets/images/icon.png', width: 32.0, height: 32.0);
           userMap.putIfAbsent(member.userId, () => img);
           _log(user: member.userId, info: message.text, type: 'message');
     };

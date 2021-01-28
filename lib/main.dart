@@ -1,7 +1,6 @@
 
 import 'package:agorartm/screen/SplashScreen.dart';
 import 'package:agorartm/screen/home.dart';
-import 'package:agorartm/screen/loginScreen.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:shared_preferences/shared_preferences.dart';
@@ -37,7 +36,8 @@ class MyApp extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
-      title: 'ShareLife',
+      debugShowCheckedModeBanner: false,
+      title: 'DAPP',
       color: blackColor,
       home: SplashScreen(),
       routes: <String, WidgetBuilder>{
@@ -55,7 +55,7 @@ class MainScreen extends StatefulWidget {
 
 class _MainScreenState extends State<MainScreen> {
 
-  var loggedIn=false;
+  var loggedIn=true;
   @override
   void initState() {
     super.initState();
@@ -66,7 +66,7 @@ class _MainScreenState extends State<MainScreen> {
     final prefs = await SharedPreferences.getInstance();
 
     setState(() {
-      loggedIn = prefs.getBool('login') ?? false;
+      loggedIn = true;
     });
   }
 
@@ -75,7 +75,7 @@ class _MainScreenState extends State<MainScreen> {
   @override
   Widget build(BuildContext context) {
     loadSharedPref();
-    return loggedIn? HomePage(): LoginScreen();
+    return HomePage();
   }
 
 
