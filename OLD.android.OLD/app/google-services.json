@@ -1,0 +1,91 @@
+{
+  "project_info": {
+    "project_number": "800643549776",
+    "firebase_url": "https://clubsapp-bdcb8.firebaseio.com",
+    "project_id": "clubsapp-bdcb8",
+    "storage_bucket": "clubsapp-bdcb8.appspot.com"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:800643549776:android:690ad0013198d8121f9f55",
+        "android_client_info": {
+          "package_name": "com.zappagency.discoapp"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "800643549776-63878avm7seclp2464dra625ennr96na.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.zappagency.discoapp",
+            "certificate_hash": "dc986b506093892c6e5681d550ea420d51efa7c9"
+          }
+        },
+        {
+          "client_id": "800643549776-n05fgeg10n0a8abb0mgcc1dchf2jpgrt.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyBBSvlmLRmJmO3ikvtat7_rI8uCa_cH87Q"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "800643549776-n05fgeg10n0a8abb0mgcc1dchf2jpgrt.apps.googleusercontent.com",
+              "client_type": 3
+            },
+            {
+              "client_id": "800643549776-l5tmvg2l0phr7c9c80bamqlqhlo79g1h.apps.googleusercontent.com",
+              "client_type": 2,
+              "ios_info": {
+                "bundle_id": "com.zappagency.discoapp"
+              }
+            }
+          ]
+        }
+      }
+    },
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:800643549776:android:5e6856a0c5a667641f9f55",
+        "android_client_info": {
+          "package_name": "events.dapp.virtual"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "800643549776-n05fgeg10n0a8abb0mgcc1dchf2jpgrt.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyBBSvlmLRmJmO3ikvtat7_rI8uCa_cH87Q"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "800643549776-n05fgeg10n0a8abb0mgcc1dchf2jpgrt.apps.googleusercontent.com",
+              "client_type": 3
+            },
+            {
+              "client_id": "800643549776-l5tmvg2l0phr7c9c80bamqlqhlo79g1h.apps.googleusercontent.com",
+              "client_type": 2,
+              "ios_info": {
+                "bundle_id": "com.zappagency.discoapp"
+              }
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

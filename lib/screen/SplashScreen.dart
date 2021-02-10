@@ -1,9 +1,13 @@
 import 'dart:async';
-
+import 'package:firebase_analytics/firebase_analytics.dart';
+import 'package:firebase_analytics/observer.dart';
 import 'package:flutter/material.dart';
-import 'package:gradient_text/gradient_text.dart';
 
 class SplashScreen extends StatefulWidget{
+  final FirebaseAnalytics analytics;
+  final FirebaseAnalyticsObserver observer;
+
+  SplashScreen({Key key, this.analytics,this.observer}) : super(key: key);
 
   @override
   _SplashScreenState createState() => _SplashScreenState();
@@ -41,7 +45,7 @@ class _SplashScreenState extends State<SplashScreen> {
       body: Container(
         height: MediaQuery.of(context).size.height,
         width: MediaQuery.of(context).size.width,
-        color: Colors.grey[900],
+        color: Color(0xFF003399),
         child: Column(
           children: <Widget>[
             Container(
