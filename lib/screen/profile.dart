@@ -7,6 +7,7 @@ import 'package:firebase_analytics/firebase_analytics.dart';
 import 'package:firebase_analytics/observer.dart';
 import 'package:dapp_virtual/widgets/drawer.dart';
 import 'package:mime/mime.dart';
+import 'package:dapp_virtual/main.dart';
 import 'package:path/path.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:shared_preferences/shared_preferences.dart';
@@ -32,7 +33,7 @@ class _ProfileState extends State<Profile> {
 
   final _nameController = TextEditingController();
 
-  bool boolName=false, invalidError =false;
+  bool changed=false, imgchanged =false;
 
   void _submit() async{
     setState(() {
@@ -46,11 +47,15 @@ class _ProfileState extends State<Profile> {
     if(_imagelocal != null && _imagelocal.existsSync()) {
       final fileName = basename(_imagelocal.path);
       final File newImage = await _imagelocal.copy('$path/$fileName');
+      debugPrint('$path/$fileName');
       await prefs.setString('imagelocal', newImage.path);
     }
     setState(() {
       submitted=false;
+      changed = false;
+      imgchanged = false;
     });
+    Navigator.push(context, MaterialPageRoute(builder: (context) => MainScreen()));
   }
 
   void imageDialog(){
@@ -130,14 +135,14 @@ class _ProfileState extends State<Profile> {
   }
 
   void setName(){
-    if(_nameController.text.toString().trim() == ''){
+    if(_nameController.text.toString().trim() == name){
       setState(() {
-        boolName=false;
+        changed=false;
       });
     }
     else
       setState(() {
-        boolName=true;
+        changed=true;
       });
 
   }
@@ -162,11 +167,17 @@ class _ProfileState extends State<Profile> {
         ),
         backgroundColor: Color(0xFF003399),
       ),
-      body: SingleChildScrollView(
+      body: Container(
+        decoration: BoxDecoration(
+          image: DecorationImage(
+            image: AssetImage("assets/images/dj.jpg"),
+            fit: BoxFit.cover,
+          ),
+        ),
         child: Column(
           children: <Widget>[
             Container(
-              height: MediaQuery.of(context).size.height -45,
+              height: MediaQuery.of(context).size.height -110,
               child: Column(
                 mainAxisAlignment: MainAxisAlignment.center,
                 crossAxisAlignment: CrossAxisAlignment.center,
@@ -221,10 +232,10 @@ class _ProfileState extends State<Profile> {
                           shape: RoundedRectangleBorder(
                             borderRadius: BorderRadius.circular(4.0),
                           ),
-                          onPressed: (boolName!=false) ?_submit : null,
+                          onPressed: (changed || imgchanged) ?_submit : null,
                           color: Colors.blue,
-                          disabledColor: Colors.blue[800],
-                          disabledTextColor: Colors.white60,
+                          disabledColor: Colors.green,
+                          disabledTextColor: Colors.black45,
                           textColor: Colors.white,
                           padding: EdgeInsets.all(15.0),
                           child: submitted ? SizedBox(
@@ -243,33 +254,9 @@ class _ProfileState extends State<Profile> {
                           ),
                         ),
                       ),
-                      SizedBox(height: 20.0),
                     ],
                   ),
                 ],
-              ),
-            ),
-
-            GestureDetector(
-              onTap: (){
-                Navigator.pop(context);
-              },
-              child: Container(
-                height: 40,
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: <Widget>[
-                    Divider(color: Colors.white,height: 0,),
-                    SizedBox(height: 15,),
-                    Row(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: <Widget>[
-                        Text("Already have an account? ", style: TextStyle(color: Colors.white70,fontSize: 11),),
-                        Text('Log in.',style: TextStyle(color: Colors.white, fontSize: 11,fontWeight: FontWeight.bold),),
-                      ],
-                    ),
-                  ],
-                ),
               ),
             ),
           ],
@@ -284,6 +271,7 @@ class _ProfileState extends State<Profile> {
 
       setState(() {
         _imagelocal = imagefile;
+        imgchanged = true;
       });
     });
   }

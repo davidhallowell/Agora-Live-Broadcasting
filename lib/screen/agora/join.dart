@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'dart:io';
 import 'package:agora_rtm/agora_rtm.dart';
 import 'package:dapp_virtual/models/message.dart';
 import 'package:dapp_virtual/screen/Loading.dart';
@@ -70,6 +71,9 @@ class _JoinPageState extends State<JoinPage> {
 
   @override
   void dispose() {
+    SystemChrome.setPreferredOrientations([
+      DeviceOrientation.portraitUp
+    ]);
     // clear users
     _users.clear();
     // destroy sdk
@@ -81,9 +85,23 @@ class _JoinPageState extends State<JoinPage> {
   @override
   void initState() {
     super.initState();
+    SystemChrome.setPreferredOrientations([
+      DeviceOrientation.landscapeRight,
+      DeviceOrientation.landscapeLeft,
+      DeviceOrientation.portraitUp
+    ]);
     // initialize agora sdk
     initialize();
-    userMap = {widget.username: widget.userImage};
+    Image userImage;
+
+    if (widget.userImage != null && File(widget.userImage).existsSync()) {
+      userImage = Image.file(File(widget.userImage));
+    } else if (widget.hostImage != null && widget.hostImage.isNotEmpty) {
+      userImage = Image.network(widget.hostImage);
+    } else {
+      userImage = Image.asset('assets/images/dummy.png');
+    }
+    userMap = {widget.username: userImage};
     _createClient();
   }
 
@@ -358,16 +376,13 @@ class _JoinPageState extends State<JoinPage> {
                     mainAxisSize: MainAxisSize.max,
                     mainAxisAlignment: MainAxisAlignment.start,
                     children: <Widget>[
-                      CachedNetworkImage(
-                        imageUrl: _infoStrings[index].image,
-                        imageBuilder: (context, imageProvider) => Container(
-                          width: 32.0,
-                          height: 32.0,
-                          decoration: BoxDecoration(
-                            shape: BoxShape.circle,
-                            image: DecorationImage(
-                                image: imageProvider, fit: BoxFit.cover),
-                          ),
+                    Container(
+                        width: 32.0,
+                        height: 32.0,
+                        decoration: BoxDecoration(
+                          shape: BoxShape.circle,
+                          image: DecorationImage(
+                              image: _infoStrings[index].image.image, fit: BoxFit.cover),
                         ),
                       ),
                       Padding(
@@ -392,16 +407,13 @@ class _JoinPageState extends State<JoinPage> {
                     mainAxisSize: MainAxisSize.max,
                     mainAxisAlignment: MainAxisAlignment.start,
                     children: <Widget>[
-                      CachedNetworkImage(
-                        imageUrl: _infoStrings[index].image,
-                        imageBuilder: (context, imageProvider) => Container(
-                          width: 32.0,
-                          height: 32.0,
-                          decoration: BoxDecoration(
-                            shape: BoxShape.circle,
-                            image: DecorationImage(
-                                image: imageProvider, fit: BoxFit.cover),
-                          ),
+                      Container(
+                        width: 32.0,
+                        height: 32.0,
+                        decoration: BoxDecoration(
+                          shape: BoxShape.circle,
+                          image: DecorationImage(
+                              image: _infoStrings[index].image.image, fit: BoxFit.cover),
                         ),
                       ),
                       Column(
