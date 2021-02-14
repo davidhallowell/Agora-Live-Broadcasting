@@ -2,6 +2,7 @@ import 'dart:async';
 import 'package:firebase_analytics/firebase_analytics.dart';
 import 'package:firebase_analytics/observer.dart';
 import 'package:flutter/material.dart';
+import 'package:admob_flutter/admob_flutter.dart';
 
 class SplashScreen extends StatefulWidget{
   final FirebaseAnalytics analytics;
@@ -31,6 +32,7 @@ class _SplashScreenState extends State<SplashScreen> {
 
   startTime() async {
     var _duration = new Duration(seconds: 3);
+    await Admob.requestTrackingAuthorization();
     return new Timer(_duration, navigationPage);
   }
 

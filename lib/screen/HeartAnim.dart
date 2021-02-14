@@ -10,7 +10,7 @@ class HeartAnim extends StatelessWidget {
   HeartAnim(this.top, this.left,this.opacity);
   static final RandomColor _randomColor = RandomColor();
 
-  Color _color = _randomColor.randomColor(
+  final Color _color = _randomColor.randomColor(
   );
   Widget build(BuildContext context) {
     final random = math.Random();

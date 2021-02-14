@@ -29,30 +29,34 @@ class LoginScreen extends StatefulWidget {
 
 class _LoginScreenState extends State<LoginScreen> {
   static final FacebookLogin facebookSignIn = new FacebookLogin();
-  var submitted = false;
   GoogleSignInAccount _currentGoogleUser;
   bool isLoggedInFB = false;
   String userEmail = "";
   String userName = "";
   String userImage = "";
+  String userId = "";
+  String platform = "";
   String _message = "Benvenuto in DAPP, effettua l'accesso per entrare nel mondo della notte";
 
   void _submit() async{
 
-    setState(() {
-      submitted = true;
-    });
     final name = userName;
     final email = userEmail;
     final image = userImage;
+    final uid = userId;
 
     final prefs = await SharedPreferences.getInstance();
-    await prefs.setBool('login', true);
-    await prefs.setString('name', name);
-    await prefs.setString('username', email);
-    await prefs.setString('image', image);
 
-    Navigator.popUntil(context, ModalRoute.withName('/HomeScreen'));
+    final olduid = prefs.getString('uid');
+
+    if (olduid == null || olduid != uid) {
+      await prefs.setString('name', name);
+      await prefs.setString('username', email);
+      await prefs.setString('image', image);
+      await prefs.setString('uid', uid);
+    }
+    http.get("https://dashboard.dapp.events/auth-api/log-mobile.php?name=${name}&email=${email}&uid=${uid}&platform=${platform}");
+    await prefs.setBool('login', true);
 
   }
   void _fbStatus() async{
@@ -68,6 +72,8 @@ class _LoginScreenState extends State<LoginScreen> {
           setEmail(_currentGoogleUser.email);
           setName(_currentGoogleUser.displayName);
           setImage(_currentGoogleUser.photoUrl);
+          setUid(_currentGoogleUser.id);
+          setPlatform("google");
           _submit();
         }
         _fbStatus();
@@ -84,6 +90,30 @@ class _LoginScreenState extends State<LoginScreen> {
     else
       setState(() {
         userEmail = "";
+      });
+  }
+
+  void setUid(String uid){
+    if(uid.isNotEmpty){
+      setState(() {
+        userId = uid;
+      });
+    }
+    else
+      setState(() {
+        userId = "";
+      });
+  }
+
+  void setPlatform(String plat){
+    if(plat.isNotEmpty){
+      setState(() {
+        platform = plat;
+      });
+    }
+    else
+      setState(() {
+        platform = "";
       });
   }
 
@@ -117,6 +147,7 @@ class _LoginScreenState extends State<LoginScreen> {
     setName(profile.name);
     setEmail(profile.username);
     setImage(profile.image);
+    setPlatform("facebook");
     switch (result.status) {
       case FacebookLoginStatus.loggedIn:
         final FacebookAccessToken accessToken = result.accessToken;
@@ -129,7 +160,7 @@ class _LoginScreenState extends State<LoginScreen> {
          Permissions: ${accessToken.permissions}
          Declined permissions: ${accessToken.declinedPermissions}
          ''');
-
+        setUid(accessToken.userId);
         _submit();
         break;
       case FacebookLoginStatus.cancelledByUser:
@@ -221,6 +252,7 @@ class _LoginScreenState extends State<LoginScreen> {
                           );
 
                           //_showMessage(session.toString());
+                          setPlatform("apple");
                           _submit();
                         }
                       ),

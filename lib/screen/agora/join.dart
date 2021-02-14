@@ -1,10 +1,12 @@
 import 'dart:async';
 import 'dart:io';
+import 'package:admob_flutter/admob_flutter.dart';
 import 'package:agora_rtm/agora_rtm.dart';
 import 'package:dapp_virtual/models/message.dart';
+import 'package:dapp_virtual/models/remoteMessage.dart';
 import 'package:dapp_virtual/screen/Loading.dart';
 import 'package:agora_rtc_engine/agora_rtc_engine.dart';
-import 'package:cached_network_image/cached_network_image.dart';
+//import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
@@ -17,6 +19,7 @@ import 'package:dapp_virtual/screen/HeartAnim.dart';
 import 'package:socket_io_client/socket_io_client.dart' as IO;
 import 'package:firebase_analytics/firebase_analytics.dart';
 import 'package:firebase_analytics/observer.dart';
+import 'package:dapp_virtual/utils/adextensions.dart';
 
 class JoinPage extends StatefulWidget {
   /// non-modifiable channel name of the page
@@ -36,10 +39,11 @@ class JoinPage extends StatefulWidget {
 
 class _JoinPageState extends State<JoinPage> {
   static const String IOHOST = "https://dashboard.dapp.events:3456";
-  IO.Socket socket;
+  IO.Socket socket = IO.io(IOHOST, <String, dynamic>{'transports': ['websocket'] });
   bool loading = true;
   bool completed = false;
   bool joined = false;
+  bool isLive = false;
   static final _users = <int>[];
   bool muted = true;
   int userNo = 2;
@@ -49,9 +53,6 @@ class _JoinPageState extends State<JoinPage> {
   bool heart = false;
   bool requested = false;
   String id_user = ""; // for socketio
-
-  bool _isLogin = true;
-  bool _isInChannel = true;
 
   final _channelMessageController = TextEditingController();
 
@@ -106,55 +107,24 @@ class _JoinPageState extends State<JoinPage> {
   }
 
   Future<void> initialize() async {
-    // socket = IO.io(IOHOST, {'transports': ['websocket'] });
-    // debugPrint("A");
-    // socket.connect();
-    // debugPrint(socket.connected.toString());
+    //socket = IO.io(IOHOST, {'transports': ['websocket'] });
+    debugPrint("A");
+    //socket.connect();
+    debugPrint(socket.connected.toString());
+    debugPrint(socket.id);
     // socket.onConnect((_) {
     //   debugPrint('connect');
-    //   setState(() {
-    //     id_user=socket.id;
-    //   });
-    //   socket.emit('roomJoin', {
-    //     'room': widget.channelId,
-    //     'new_join': widget.username,
-    //     'image': widget.userImage,
-    //     'id_user': id_user,
-    //   });
+      setState(() {
+        id_user=socket.id;
+      });
+      socket.emit('roomJoin', {
+        'room': widget.channelId,
+        'new_join': widget.username,
+        'image': widget.hostImage,
+        'id_user': id_user,
+      });
     // });
-    // socket.on('receiveMessage', (message) {
-    //   //TODO
-    //   int count;
-    //   if (message.users != null) {
-    //     count = message.users.toInt();
-    //     setState(() {
-    //       userNo=count;
-    //     });
-    //     message.users = null;
-    //   }
-    //   if (message.promote_link != null && message.promote_text != null) {
-    //     setState(() {
-    //       promoteText = message.promote_text;
-    //       promoteLink = message.promote_link;
-    //     });
-    //     message.promote_text = null;
-    //   } else if (message.hide_promote != null) {
-    //     setState(() {
-    //       promoteText = null;
-    //       promoteLink = null;
-    //     });
-    //     message.hide_promote = null;
-    //   }
-    //   if (message.reaction != null) {
-    //
-    //   }
-    //   if (message.new_join != null) {
-    //     if(message.new_join == widget.username || message.new__join.toString().length < 3) {
-    //       //return;
-    //     }
-    //
-    //   }
-    // });
+    _addSocketIOEventHandlers();
     await _initAgoraRtcEngine();
     _addAgoraEventHandlers();
     AgoraRtcEngine.setChannelProfile(ChannelProfile.LiveBroadcasting);
@@ -173,6 +143,53 @@ class _JoinPageState extends State<JoinPage> {
     await AgoraRtcEngine.enableVideo();
   }
 
+  void _addSocketIOEventHandlers() {
+    socket.on('receiveMessage', (messagez)  {
+      //TODO
+      RemoteMessage message = RemoteMessage.fromJson(messagez);
+      debugPrint("message received");
+      int count;
+      debugPrint(messagez.toString());
+      if (message.users != null) {
+        count = message.users;
+        setState(() {
+          userNo=count;
+        });
+        message.users = null;
+      }
+      if (message.promote_link != null && message.promote_text != null) {
+        setState(() {
+          promoteText = message.promote_text;
+          promoteLink = message.promote_link;
+        });
+        debugPrint("Promote text");
+        message.promote_text = null;
+      } else if (message.hide_promote) {
+        setState(() {
+          promoteText = null;
+          promoteLink = null;
+        });
+        debugPrint("Promote null");
+        message.hide_promote = null;
+      }
+      if (message.type == 'reaction') {
+        debugPrint("Reaction");
+        popUp();
+      }
+      if (message.type == 'new_join' && message.username != null) {
+        if(message.username == widget.username || message.username.length < 3) {
+          debugPrint("Me join"); //return;
+        } else {
+          debugPrint("You join");
+          _msg(type: 'join', user: message.username, image: message.image);
+        }
+      } else if (message.type == 'message' && message.message != null) {
+        debugPrint("Here be a message");
+        _msg(message: message.message, type: message.type, image: message.image, user: message.username);
+      }
+    });
+    socket.onDisconnect((data) => socket.connect());
+  }
   /// Add agora event handlers
   void _addAgoraEventHandlers() {
 
@@ -268,17 +285,23 @@ class _JoinPageState extends State<JoinPage> {
                child: Container(
                  alignment: Alignment.center,
                  padding: EdgeInsets.all(10),
-                 //color: Color(0xFF003399),
-                 child: Text("Attualmente non ci sono artisti qui, seguici su instagram su @dapp.events per rimanere aggiornato!",
-                   style: TextStyle(
-                     fontFamily: "Helvetica",
-                      fontSize: 20,
-                      color: Colors.white70,
-                    ),
-                  ),
+                 child: Column(
+                   mainAxisAlignment: MainAxisAlignment.center,
+                   children: <Widget> [
+                     Text("Attualmente non ci sono artisti qui, seguici su instagram su @dapp.events per rimanere aggiornato!",
+                       style: TextStyle(
+                         fontFamily: "Helvetica",
+                         fontSize: 20,
+                         color: Colors.white70,
+                       ),
+                     ), 
+                     AdmobBanner(adUnitId: getBannerAdUnitId(), adSize: AdmobBannerSize.SMART_BANNER(context))
+                   ] 
+                 )
                 )
           );
       case 1:
+        isLive = true;
         return (loading==true)&&(completed==false)?
         //LoadingPage()
         LoadingPage()
@@ -287,6 +310,7 @@ class _JoinPageState extends State<JoinPage> {
               children: <Widget>[_expandedVideoRow([views[0]])],
             ));
       case 2:
+        isLive = true;
         return (loading==true)&&(completed==false)?
         //LoadingPage()
         LoadingPage()
@@ -351,111 +375,123 @@ class _JoinPageState extends State<JoinPage> {
 
   /// Info panel to show logs
   Widget _messageList() {
-    return Container(
-      padding: const EdgeInsets.fromLTRB(0, 0, 0, 10),
-      alignment: Alignment.bottomCenter,
-      child: FractionallySizedBox(
-        heightFactor: 0.5,
-        child: Container(
-          padding: const EdgeInsets.symmetric(vertical: 48),
-          child: ListView.builder(
-            reverse: true,
-            itemCount: _infoStrings.length,
-            itemBuilder: (BuildContext context, int index) {
-              if (_infoStrings.isEmpty) {
-                return null;
-              }
-              return Padding(
-                padding: const EdgeInsets.symmetric(
-                  vertical: 3,
-                  horizontal: 10,
-                ),
-                child: (_infoStrings[index].type=='join')? Padding(
-                  padding: const EdgeInsets.only(bottom: 10),
-                  child: Row(
-                    mainAxisSize: MainAxisSize.max,
-                    mainAxisAlignment: MainAxisAlignment.start,
-                    children: <Widget>[
-                    Container(
-                        width: 32.0,
-                        height: 32.0,
-                        decoration: BoxDecoration(
-                          shape: BoxShape.circle,
-                          image: DecorationImage(
-                              image: _infoStrings[index].image.image, fit: BoxFit.cover),
-                        ),
-                      ),
-                      Padding(
-                        padding: const  EdgeInsets.symmetric(
-                          horizontal: 8,
-                        ),
-                        child: Text(
-                          '${_infoStrings[index].user} joined',
-                          style: TextStyle(
-                            color: Colors.white,
-                            fontSize: 14,
-                          ),
-                        ),
-                      ),
-                    ],
-                  ),
-                ):
-                (_infoStrings[index].type=='message')?
-                Padding(
-                  padding: const EdgeInsets.only(bottom: 10),
-                  child: Row(
-                    mainAxisSize: MainAxisSize.max,
-                    mainAxisAlignment: MainAxisAlignment.start,
-                    children: <Widget>[
-                      Container(
-                        width: 32.0,
-                        height: 32.0,
-                        decoration: BoxDecoration(
-                          shape: BoxShape.circle,
-                          image: DecorationImage(
-                              image: _infoStrings[index].image.image, fit: BoxFit.cover),
-                        ),
-                      ),
-                      Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
+    return OrientationBuilder(
+      builder: (context, orientation) {
+        double padding = orientation == Orientation.portrait ? 50 : 10;
+        double heightfactor = orientation == Orientation.portrait ? 0.67 : 1.0;
+        return Container(
+          padding: EdgeInsets.fromLTRB(0, 0, 0, padding),
+          alignment: Alignment.bottomCenter,
+          child: FractionallySizedBox(
+            heightFactor: heightfactor,
+            child: Container(
+              padding: const EdgeInsets.symmetric(vertical: 48),
+              child: ListView.builder(
+                reverse: true,
+                itemCount: _infoStrings.length,
+                itemBuilder: (BuildContext context, int index) {
+                  if (_infoStrings.isEmpty) {
+                    return null;
+                  }
+                  return Padding(
+                    padding: const EdgeInsets.symmetric(
+                      vertical: 0,
+                      horizontal: 10,
+                    ),
+                    child: (_infoStrings[index].type == 'join') ? Padding(
+                      padding: const EdgeInsets.only(bottom: 5),
+                      child: Row(
+                        mainAxisSize: MainAxisSize.max,
+                        mainAxisAlignment: MainAxisAlignment.start,
                         children: <Widget>[
+                          // Container(
+                          //   width: 32.0,
+                          //   height: 32.0,
+                          //   decoration: BoxDecoration(
+                          //     shape: BoxShape.circle,
+                          //     image: DecorationImage(
+                          //         image: _infoStrings[index].image.image,
+                          //         fit: BoxFit.cover),
+                          //   ),
+                          // ),
                           Padding(
-                            padding: const  EdgeInsets.symmetric(
+                            padding: const EdgeInsets.symmetric(
                               horizontal: 8,
                             ),
                             child: Text(
-                              _infoStrings[index].user,
+                              '${_infoStrings[index].user} joined',
                               style: TextStyle(
-                                  color: Colors.white,
-                                  fontSize: 14,
-                                  fontWeight: FontWeight.bold
-                              ),
-                            ),
-                          ),
-                          SizedBox(height: 5,),
-                          Padding(
-                            padding: const  EdgeInsets.symmetric(
-                              horizontal: 8,
-                            ),
-                            child: Text(
-                              _infoStrings[index].message,
-                              style: TextStyle(
-                                  color: Colors.white,
-                                  fontSize: 14
+                                color: Colors.white,
+                                fontSize: 14,
+                                fontWeight: FontWeight.bold
                               ),
                             ),
                           ),
                         ],
+                      ),
+                    ) :
+                    (_infoStrings[index].type == 'message') ?
+                    Padding(
+                      padding: const EdgeInsets.only(bottom: 5),
+                      child: Container(
+                        color: Colors.black.withOpacity(0.5),
+                        child: Row(
+                          mainAxisSize: MainAxisSize.max,
+                          mainAxisAlignment: MainAxisAlignment.start,
+                          children: <Widget>[
+                            Container(
+                              width: 32.0,
+                              height: 32.0,
+                              decoration: BoxDecoration(
+                                shape: BoxShape.circle,
+                                image: DecorationImage(
+                                    image: _infoStrings[index].image.image,
+                                    fit: BoxFit.cover),
+                              ),
+                            ),
+                            Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: <Widget>[
+                                Padding(
+                                  padding: const EdgeInsets.symmetric(
+                                    horizontal: 8,
+                                  ),
+                                  child: Text(
+                                    _infoStrings[index].user,
+                                    style: TextStyle(
+                                        color: Colors.white,
+                                        fontSize: 14,
+                                        fontWeight: FontWeight.bold
+                                    ),
+                                  ),
+                                ),
+                                SizedBox(height: 5,),
+                                Padding(
+                                  padding: const EdgeInsets.symmetric(
+                                    horizontal: 8,
+                                  ),
+                                  child: Text(
+                                    _infoStrings[index].message,
+                                    style: TextStyle(
+                                        color: Colors.white,
+                                        fontSize: 14
+                                    ),
+                                  ),
+                                ),
+                              ],
+                            )
+                          ],
+                        ),
                       )
-                    ],
-                  ),
-                )
-                    :null,
-              );
-            },
+                    )
+                        : null,
+                  );
+                },
+              ),
+            ),
           ),
-        ),
-      ),
+        );
+      }
     );
   }
 
@@ -491,7 +527,26 @@ class _JoinPageState extends State<JoinPage> {
       ),
     );
   }
-
+  Widget _liveButton() {
+    if (isLive) {
+      return Container(
+        decoration: BoxDecoration(
+            gradient: LinearGradient(
+              colors: <Color>[
+                Colors.indigo, Colors.blue
+              ],
+            ),
+            borderRadius: BorderRadius.all(Radius.circular(4.0))
+        ),
+        child: Padding(
+          padding: const EdgeInsets.symmetric(vertical: 5.0,horizontal: 8.0),
+          child: Text('LIVE',style: TextStyle(color: Colors.white,fontSize: 15,fontWeight: FontWeight.bold),),
+        ),
+      );
+    } else {
+      return Container(child: Text(''));
+    }
+  }
   Widget _liveText(){
     return Container(
       alignment: Alignment.topRight,
@@ -503,20 +558,7 @@ class _JoinPageState extends State<JoinPage> {
             mainAxisAlignment: MainAxisAlignment.end,
             crossAxisAlignment: CrossAxisAlignment.end,
             children: <Widget>[
-              Container(
-                decoration: BoxDecoration(
-                    gradient: LinearGradient(
-                      colors: <Color>[
-                        Colors.indigo, Colors.blue
-                      ],
-                    ),
-                    borderRadius: BorderRadius.all(Radius.circular(4.0))
-                ),
-                child: Padding(
-                  padding: const EdgeInsets.symmetric(vertical: 5.0,horizontal: 8.0),
-                  child: Text('LIVE',style: TextStyle(color: Colors.white,fontSize: 15,fontWeight: FontWeight.bold),),
-                ),
-              ),
+              _liveButton(),
               Padding(
                 padding: const EdgeInsets.only(left:5),
                 child: Container(
@@ -639,80 +681,94 @@ class _JoinPageState extends State<JoinPage> {
 
 
   Widget _bottomBar() {
-    if (!_isLogin || !_isInChannel) {
-      return Container();
-    }
     return Container(
       alignment: Alignment.bottomRight,
-      child: Container(
-        child: Padding(
-          padding: const EdgeInsets.only(left:8,top:5,right: 8,bottom: 5),
-          child: Row(
-              mainAxisAlignment: MainAxisAlignment.end,
-              children: <Widget>[
-                new Expanded(
-                    child: Padding(
-                      padding: const EdgeInsets.fromLTRB(0.0,0,0,0),
-                      child: new TextField(
-                          cursorColor: Colors.blue,
-                          textInputAction: TextInputAction.go,
-                          onSubmitted: _sendMessage,
-                          style: TextStyle(color: Colors.white,),
-                          controller: _channelMessageController,
-                          textCapitalization: TextCapitalization.sentences,
-                          decoration: InputDecoration(
-                            isDense: true,
-                            hintText: 'Comment',
-                            hintStyle: TextStyle(color: Colors.white),
-                            enabledBorder: OutlineInputBorder(
-                                borderRadius: BorderRadius.circular(50.0),
-                                borderSide: BorderSide(color: Colors.white)
-                            ),
-                            focusedBorder: OutlineInputBorder(
-                                borderRadius: BorderRadius.circular(50.0),
-                                borderSide: BorderSide(color: Colors.white)
+      child: OrientationBuilder(
+        builder: (context, orientation) {
+          Widget admob = orientation == Orientation.portrait ?
+              AdmobBanner(adUnitId: getBannerAdUnitId(), adSize: AdmobBannerSize.SMART_BANNER(context)): Container();
+          return Container(
+            child: Padding(
+              padding: const EdgeInsets.only(
+                  left: 8, top: 5, right: 8, bottom: 0),
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.end,
+               children: <Widget> [
+                 Row(
+                    mainAxisAlignment: MainAxisAlignment.end,
+                    children: <Widget>[
+                      new Expanded(
+                          child: Padding(
+                            padding: const EdgeInsets.fromLTRB(0.0, 0, 0, 0),
+                            child: new TextField(
+                                cursorColor: Colors.blue,
+                                textInputAction: TextInputAction.go,
+                                onSubmitted: _sendMessage,
+                                style: TextStyle(color: Colors.white,),
+                                controller: _channelMessageController,
+                                textCapitalization: TextCapitalization.sentences,
+                                decoration: InputDecoration(
+                                  isDense: true,
+                                  hintText: 'Comment',
+                                  hintStyle: TextStyle(color: Colors.white),
+                                  enabledBorder: OutlineInputBorder(
+                                      borderRadius: BorderRadius.circular(50.0),
+                                      borderSide: BorderSide(color: Colors.white)
+                                  ),
+                                  focusedBorder: OutlineInputBorder(
+                                      borderRadius: BorderRadius.circular(50.0),
+                                      borderSide: BorderSide(color: Colors.white)
+                                  ),
+                                )
                             ),
                           )
                       ),
-                    )
-                ),
-                Padding(
-                  padding: const EdgeInsets.fromLTRB(8.0, 0, 0, 0),
-                  child: MaterialButton(
-                    minWidth: 0,
-                    onPressed: _toggleSendChannelMessage,
-                    child: Icon(
-                      Icons.send,
-                      color: Colors.white,
-                      size: 20.0,
-                    ),
-                    shape: CircleBorder(),
-                    elevation: 2.0,
-                    color: Colors.blue[400],
-                    padding: const EdgeInsets.all(12.0),
+                      Padding(
+                        padding: const EdgeInsets.fromLTRB(8.0, 0, 0, 0),
+                        child: MaterialButton(
+                          minWidth: 0,
+                          onPressed: _toggleSendChannelMessage,
+                          child: Icon(
+                            Icons.send,
+                            color: Colors.white,
+                            size: 20.0,
+                          ),
+                          shape: CircleBorder(),
+                          elevation: 2.0,
+                          color: Colors.blue[400],
+                          padding: const EdgeInsets.all(12.0),
+                        ),
+                      ),
+                      Padding(
+                        padding: const EdgeInsets.fromLTRB(0, 0, 0, 0),
+                        child: MaterialButton(
+                          minWidth: 0,
+                          onPressed: () async {
+                            popUp();
+                            socket.emit('messageRoomSend', {
+                              'room': widget.channelId,
+                              'username_user': widget.username,
+                              'reaction': 'heart',
+                              'id_user': id_user
+                            });
+                          },
+                          child: Icon(
+                            Icons.favorite_border,
+                            color: Colors.white,
+                            size: 30.0,
+                          ),
+                          padding: const EdgeInsets.all(12.0),
+                        ),
+                      ),
+                    ]
                   ),
-                ),
-                Padding(
-                  padding: const EdgeInsets.fromLTRB(0, 0, 0, 0),
-                  child: MaterialButton(
-                    minWidth: 0,
-                    onPressed: ()
-                    async{
-                      popUp();
-                    await _channel.sendMessage(AgoraRtmMessage.fromText('m1x2y3z4p5t6l7k8'));
-                    },
-                    child: Icon(
-                      Icons.favorite_border,
-                      color: Colors.white,
-                      size: 30.0,
-                    ),
-                    padding: const EdgeInsets.all(12.0),
-                  ),
-                ),
-              ]
-          ),
-        ),
-      ),
+                 admob
+                ]
+              ),
+            ),
+          );
+        }
+      )
     );
   }
 
@@ -744,15 +800,14 @@ class _JoinPageState extends State<JoinPage> {
       return;
     }
     try {
-      _channelMessageController.clear();
-      await _channel.sendMessage(AgoraRtmMessage.fromText(text));
-      _log(user: widget.username, info: text,type: 'message');
+      _sendMessage(text);
     } catch (errorCode) {
       //_log('Send channel message error: ' + errorCode.toString());
     }
   }
 
   void _sendMessage(text) async {
+    debugPrint(text);
     if (text.isEmpty) {
       return;
     }
@@ -761,11 +816,11 @@ class _JoinPageState extends State<JoinPage> {
       socket.emit('messageRoomSend', {
         'room': widget.channelId,
         'username_user': widget.username,
-        'image': widget.userImage,
+        'image': widget.hostImage,
         'message': text,
-        'id_user': id_user
+        'id_user': socket.id
       });
-      _log(user: widget.channelName, info:text,type: 'message');
+      //_msg(user: widget.username, message:text, type: 'message');
     } catch (errorCode) {
       //_log('Send channel message error: ' + errorCode.toString());
     }
@@ -774,24 +829,15 @@ class _JoinPageState extends State<JoinPage> {
   void _createClient() async {
     _client =
     await AgoraRtmClient.createInstance('b42ce8d86225475c9558e478f1ed4e8e');
-    _client.onMessageReceived = (AgoraRtmMessage message, String peerId)  async{
-      var img = Image.asset('assets/images/icon.png', width: 32.0, height: 32.0);
-      userMap.putIfAbsent(peerId, () => img);
-      _log(user: peerId, info: message.text, type: 'message');
-    };
     _client.onConnectionStateChanged = (int state, int reason) {
       if (state == 5) {
         _client.logout();
        // _log('Logout.');
-        setState(() {
-          _isLogin = false;
-        });
       }
     };
     await _client.login(null, widget.username );
     _channel = await _createChannel(widget.channelName);
     await _channel.join();
-    var len;
     _channel.getMembers().then((value) {
       len = value.length;
       setState(() {
@@ -814,84 +860,45 @@ class _JoinPageState extends State<JoinPage> {
           //userNo= len ;
         });
       });
-
-      _log(info: 'Member joined: ',  user: member.userId,type: 'join');
-    };
-    channel.onMemberLeft = (AgoraRtmMember member) {
-      var len;
-      _channel.getMembers().then((value) {
-        len = value.length;
-        setState(() {
-          //userNo= len ;
-        });
-      });
-
-    };
-    channel.onMessageReceived =
-        (AgoraRtmMessage message, AgoraRtmMember member) async {
-          var img = Image.asset('assets/images/icon.png', width: 32.0, height: 32.0);
-          userMap.putIfAbsent(member.userId, () => img);
-          _log(user: member.userId, info: message.text, type: 'message');
     };
     return channel;
   }
 
-  void _log({String info,String type,String user}) {
-    if(type=='message' && info.contains('m1x2y3z4p5t6l7k8')){
-      popUp();
-    }
-    else if(type=='message' && info.contains('E1m2I3l4i5E6')){
-      stopFunction();
-    }
-    else {
-      Message m;
-      var image = userMap[user];
-      if(info.contains('d1a2v3i4s5h6')){
-        var mess = info.split(' ');
-        if(mess[1]==widget.username){
-          /*m = new Message(
-              message: 'working', type: type, user: user, image: image);*/
-          setState(() {
-            //_infoStrings.insert(0, m);
-            requested = true;
-          });
-        }
-      }
-      else {
-        m = new Message(
-            message: info, type: type, user: user, image: image);
-        setState(() {
-          _infoStrings.insert(0, m);
-        });
-      }
-    }
-  }
   void _msg({String message,String type,String user,String image}) {
     if(type=='new_join'){
       // show join
-    } else if(type=='react') {
-      // heart
+    } else if(type=='reaction') {
+      popUp();
     } else if(type=='promo') {
       // set promo banner
     }
     else {
       Message m;
-      var image = userMap[user];
-      if(user==widget.username){
-        /*m = new Message(
-            message: 'working', type: type, user: user, image: image);*/
-        setState(() {
-          //_infoStrings.insert(0, m);
-          requested = true;
-        });
+      Image chosenImage;
+      if (image != null && image.startsWith("/")) {
+        chosenImage = Image.file(File(image));
+      } else if (image != null && image.startsWith("http")) {
+        chosenImage = Image.network(image);
+      } else {
+        chosenImage = Image.asset('assets/images/dummy.png');
       }
-      else {
+      //var image = userMap[user];
+      // if(user==widget.username){
+      //   /*m = new Message(
+      //       message: 'working', type: type, user: user, image: image);*/
+      //   setState(() {
+      //     //_infoStrings.insert(0, m);
+      //     requested = true;
+      //   });
+      // }
+      // else {
+        debugPrint("create message");
         m = new Message(
-            message: message, type: type, user: user, image: image);
+            message: message, type: type, user: user, image: chosenImage);
         setState(() {
           _infoStrings.insert(0, m);
         });
-      }
+      // }
     }
   }
 }

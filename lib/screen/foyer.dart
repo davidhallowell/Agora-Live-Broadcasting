@@ -1,15 +1,17 @@
 import 'dart:async';
+//import 'dart:ffi';
 
+import 'package:admob_flutter/admob_flutter.dart';
 import 'package:dapp_virtual/models/live.dart';
-import 'package:cached_network_image/cached_network_image.dart';
+//import 'package:cached_network_image/cached_network_image.dart';
 import 'package:dapp_virtual/widgets/drawer.dart';
 import 'package:flare_flutter/flare_controls.dart';
 import 'package:flutter/material.dart';
-import 'package:font_awesome_flutter/font_awesome_flutter.dart';
-import 'package:intl/intl.dart';
-import 'package:permission_handler/permission_handler.dart';
+// import 'package:font_awesome_flutter/font_awesome_flutter.dart';
+// import 'package:intl/intl.dart';
+//import 'package:permission_handler/permission_handler.dart';
 import 'package:shared_preferences/shared_preferences.dart';
-import 'package:package_info/package_info.dart';
+//import 'package:package_info/package_info.dart';
 import '../models/global.dart';
 import '../models/room.dart';
 import 'agora/join.dart';
@@ -140,8 +142,9 @@ class _FoyerState extends State<Foyer> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: <Widget>[
-
-
+          SizedBox(height: 10,),
+          AdmobBanner(adUnitId: "ca-app-pub-3544751470738459/4552508396", adSize: AdmobBannerSize.SMART_BANNER(context)),
+          SizedBox(height: 10,),
           GestureDetector(
             onTap: () {
               onJoin(channelName: room.description,channelId: room.channelId,username: name, hostImage: image,userImage: imagelocal);
@@ -166,9 +169,6 @@ class _FoyerState extends State<Foyer> {
               ),
             ),
           ),
-
-          SizedBox(height: 10,)
-
         ],
       )
     );

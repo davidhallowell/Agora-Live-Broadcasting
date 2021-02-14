@@ -11,6 +11,7 @@ Future<Void> getInfo() async{
   PackageInfo packageInfo = await PackageInfo.fromPlatform();
   appName = packageInfo.appName;
   version = packageInfo.version;
+  return null;
 }
 
 
@@ -46,20 +47,27 @@ class AppDrawer extends StatelessWidget {
             title: Text('Home'),
             onTap: () {
               // Update the state of the app
-              Navigator.pushReplacementNamed(context, '/HomePage');
+              Navigator.pushReplacementNamed(context, '/HomeScreen');
               // Then close the drawer
             },
           ),
-          ListTile(
-            title: Text('Eventi live'),
-            onTap: () {
-              Navigator.pushReplacementNamed(context, '/Foyer');
-            },
-          ),
+          // ListTile(
+          //   title: Text('Eventi live'),
+          //   onTap: () {
+          //     Navigator.pushReplacementNamed(context, '/Foyer');
+          //   },
+          // ),
           ListTile(
             title: Text('Profile'),
             onTap: () {
               Navigator.pushReplacementNamed(context, '/Profile');
+            },
+          ),
+          ListTile(
+            title: Text('Shop'),
+            onTap: () {
+              // Update the state of the app
+              Navigator.pushReplacementNamed(context, '/Shop');
             },
           ),
           ListTile(

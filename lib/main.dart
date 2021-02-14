@@ -4,6 +4,7 @@ import 'package:dapp_virtual/screen/foyer.dart';
 import 'package:dapp_virtual/screen/help.dart';
 import 'package:dapp_virtual/screen/about.dart';
 import 'package:dapp_virtual/screen/home.dart';
+import 'package:dapp_virtual/screen/shop.dart';
 import 'package:dapp_virtual/screen/profile.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
@@ -15,11 +16,13 @@ import 'package:firebase_analytics/observer.dart';
 import 'package:admob_flutter/admob_flutter.dart';
 import 'models/event.dart';
 import 'models/global.dart';
+//import 'dart:io';
 
 void main() async{
   WidgetsFlutterBinding.ensureInitialized();
   await Firebase.initializeApp();
   Admob.initialize();
+
   SystemChrome.setPreferredOrientations([DeviceOrientation.portraitUp])
       .then((_) {
     runApp(new MyApp());
@@ -46,6 +49,7 @@ class MyApp extends StatelessWidget {
         '/HomeScreen': (BuildContext context) => new MainScreen(analytics: analytics, observer: observer),
         '/Foyer': (BuildContext context) => new Foyer(analytics: analytics, observer: observer),
         '/Profile': (BuildContext context) => new Profile(analytics: analytics, observer: observer),
+        '/Shop': (BuildContext context) => new Shop(analytics: analytics, observer: observer),
         '/About': (BuildContext context) => new About(analytics: analytics, observer: observer),
         '/Help': (BuildContext context) => new Help(analytics: analytics, observer: observer),
       },
@@ -63,28 +67,48 @@ class MainScreen extends StatefulWidget {
 }
 
 class _MainScreenState extends State<MainScreen> {
+  Event event;
+  bool loggedIn = false, live = false;
 
-  var loggedIn=false;
   @override
   void initState() {
     super.initState();
     loadSharedPref();
   }
 
+  @override
+  void dispose() {
+    super.dispose();
+
+  }
+
   void loadSharedPref() async{
     final prefs = await SharedPreferences.getInstance();
-
-    setState(() {
+    event = await fetchEvent();
+    live = liveEvent(event);
+    setState(()  {
       loggedIn = prefs.getBool('login') ?? false;
     });
   }
 
-
+  bool liveEvent(Event evt) {
+    var datetime = DateTime.parse(evt.datetime);
+    var now = new DateTime.now();
+    if (datetime.isBefore(now)) {
+      return true;
+    }
+    return false;
+  }
 
   @override
   Widget build(BuildContext context) {
     loadSharedPref();
-    return loggedIn? HomePage(): LoginScreen();
+    return loggedIn?
+      (live?
+        Foyer(analytics: widget.analytics, observer: widget.observer):
+        HomePage(analytics: widget.analytics, observer: widget.observer)
+      ):
+        LoginScreen(analytics: widget.analytics, observer: widget.observer);
   }
 
 

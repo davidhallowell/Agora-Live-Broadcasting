@@ -12,6 +12,7 @@ import '../models/global.dart';
 import 'package:flutter_countdown_timer/flutter_countdown_timer.dart';
 import 'package:flutter_html/flutter_html.dart';
 import 'package:url_launcher/url_launcher.dart';
+import 'package:dapp_virtual/utils/adextensions.dart';
 
 class HomePage extends StatefulWidget {
   final FirebaseAnalytics analytics;
@@ -36,7 +37,7 @@ class _HomePageState extends State<HomePage> {
   }
   @override
   Widget build(BuildContext context) {
-    return getMain();
+    return getMain(context);
   }
   Widget _header() {
     TextStyle style = TextStyle(fontSize: 28.0, fontWeight: FontWeight.w800, color: Color(0xFF023399));
@@ -47,7 +48,7 @@ class _HomePageState extends State<HomePage> {
     var datetime = DateTime.parse(evt.datetime);
     var now = new DateTime.now();
     if (datetime.isBefore(now)) {
-      return false;;
+      return false;
     }
     return true;
   }
@@ -61,7 +62,7 @@ class _HomePageState extends State<HomePage> {
       TextStyle style = TextStyle(fontSize: 72.0, fontWeight: FontWeight.w100, color: Colors.white);
       TextStyle countdown = TextStyle(fontSize: 28.0, fontWeight: FontWeight.w800, color: Colors.white);
       return Padding(
-          padding: EdgeInsets.only(top: 50.0),
+          padding: EdgeInsets.only(top: 20.0),
           child: Column(
               children: <Widget>[
                 _header(),
@@ -105,7 +106,7 @@ class _HomePageState extends State<HomePage> {
     Navigator.pushReplacementNamed(context, '/Foyer');
   }
 
-  Widget getMain() {
+  Widget getMain(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
         title:
@@ -115,7 +116,7 @@ class _HomePageState extends State<HomePage> {
           ),
         ),
         backgroundColor: Color(0xFF003399),
-      ),
+      ).withBottomAdmobBanner(context),
       body: Container(
           decoration: BoxDecoration(
             image: DecorationImage(

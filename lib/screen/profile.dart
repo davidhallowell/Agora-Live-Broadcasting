@@ -1,4 +1,4 @@
-import 'dart:convert';
+// import 'dart:convert';
 import 'dart:io';
 
 import 'package:flutter/cupertino.dart';
@@ -6,12 +6,13 @@ import 'package:flutter/material.dart';
 import 'package:firebase_analytics/firebase_analytics.dart';
 import 'package:firebase_analytics/observer.dart';
 import 'package:dapp_virtual/widgets/drawer.dart';
-import 'package:mime/mime.dart';
-import 'package:dapp_virtual/main.dart';
+// import 'package:mime/mime.dart';
+// import 'package:dapp_virtual/main.dart';
 import 'package:path/path.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:path_provider/path_provider.dart';
+import 'package:dapp_virtual/utils/adextensions.dart';
 
 class Profile extends StatefulWidget {
   static final String id = 'login_screen';
@@ -55,7 +56,6 @@ class _ProfileState extends State<Profile> {
       changed = false;
       imgchanged = false;
     });
-    Navigator.push(context, MaterialPageRoute(builder: (context) => MainScreen()));
   }
 
   void imageDialog(){
@@ -166,7 +166,7 @@ class _ProfileState extends State<Profile> {
           ),
         ),
         backgroundColor: Color(0xFF003399),
-      ),
+      ).withBottomAdmobBanner(context),
       body: Container(
         decoration: BoxDecoration(
           image: DecorationImage(
@@ -177,7 +177,7 @@ class _ProfileState extends State<Profile> {
         child: Column(
           children: <Widget>[
             Container(
-              height: MediaQuery.of(context).size.height -110,
+              height: MediaQuery.of(context).size.height - 500,
               child: Column(
                 mainAxisAlignment: MainAxisAlignment.center,
                 crossAxisAlignment: CrossAxisAlignment.center,

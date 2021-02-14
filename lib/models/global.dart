@@ -41,6 +41,7 @@ Future<Event> fetchEvent() async {
   } else {
     log("FAIL HTTP");
   }
+  return null;
 }
 
 List<Room> defaultRooms = [

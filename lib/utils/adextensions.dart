@@ -1,7 +1,6 @@
 import 'dart:math';
-
+import 'dart:io';
 import 'package:admob_flutter/admob_flutter.dart';
-import 'package:dapp_virtual/main.dart';
 import 'package:flutter/material.dart';
 
 class AppBarBannerRecipe extends StatelessWidget
@@ -27,6 +26,7 @@ class AppBarBannerRecipe extends StatelessWidget
       children: [
         appBar,
         Container(
+          color: Color(0xFF003399),
           width: size.width,
           height: height,
           child: AdmobBanner(
@@ -65,7 +65,6 @@ class TopBannerAdAppRecipe extends StatelessWidget {
       child: MediaQuery(
         data: MediaQueryData.fromWindow(WidgetsBinding.instance.window),
         child: Container(
-          color: Colors.blueGrey,
           child: Column(children: [
             SafeArea(
               bottom: false,
@@ -110,7 +109,6 @@ class BottomBannerAdAppRecipe extends StatelessWidget {
       child: MediaQuery(
         data: MediaQueryData.fromWindow(WidgetsBinding.instance.window),
         child: Container(
-          color: Colors.blueGrey,
           child: Column(children: [
             Expanded(child: child),
             SafeArea(
@@ -145,4 +143,13 @@ extension MaterialAppX on MaterialApp {
       child: this,
     );
   }
+}
+
+String getBannerAdUnitId() {
+  if (Platform.isIOS) {
+    return 'ca-app-pub-3544751470738459/4552508396';
+  } else if (Platform.isAndroid) {
+    return 'ca-app-pub-/'; //TODO
+  }
+  return null;
 }
