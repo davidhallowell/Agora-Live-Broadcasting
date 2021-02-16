@@ -81,6 +81,7 @@ class _JoinPageState extends State<JoinPage> {
     AgoraRtcEngine.leaveChannel();
     AgoraRtcEngine.destroy();
     super.dispose();
+    socket.dispose();
   }
 
   @override

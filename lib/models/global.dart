@@ -5,14 +5,16 @@ import 'package:http/http.dart' as http;
 import 'room.dart';
 import 'event.dart';
 import 'dart:convert';
-
+import 'package:firebase_remote_config/firebase_remote_config.dart';
 
 TextStyle textStyle = new TextStyle(fontFamily: 'Gotham',color: Colors.white);
 TextStyle textStyleBold = new TextStyle(fontFamily: 'Gotham', fontWeight: FontWeight.bold, color: Colors.white);
 TextStyle textStyleLigthGrey = new TextStyle(fontFamily: 'Gotham', color: Colors.grey);
 
 Future<List<Room>> fetchRooms() async {
-  final response = await http.get('https://dashboard.dapp.events/clubsapi/venue/13/rooms');
+  final RemoteConfig remoteConfig = await RemoteConfig.instance;
+  debugPrint(remoteConfig.getString('rooms_api'));
+  final response = await http.get("https://dashboard.dapp.events/clubsapi/venue/13/rooms");
 
   List<Room> rooms = new List();
 
@@ -31,7 +33,8 @@ Future<List<Room>> fetchRooms() async {
 }
 
 Future<Event> fetchEvent() async {
-  final response = await http.get('https://dashboard.dapp.events/clubsapi/venue/13/nextevent');
+  final RemoteConfig remoteConfig = await RemoteConfig.instance;
+  final response = await http.get("https://dashboard.dapp.events/clubsapi/venue/13/nextevent");
   Event event;
 
   if (response.statusCode == 200)  {

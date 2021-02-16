@@ -232,7 +232,7 @@ class _LoginScreenState extends State<LoginScreen> {
                                 AppleIDAuthorizationScopes.fullName
                               ],
                               webAuthenticationOptions: WebAuthenticationOptions(
-                                  clientId: "events.dapp.virtual",
+                                  clientId: "events.dapp.virtual.web",
                                   redirectUri: Uri.parse("https://dashboard.dapp.events/auth-api/apple-auth.php"),
                               ),
                           );
